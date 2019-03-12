@@ -11,3 +11,7 @@ The main scripts constrution:
   * Main data structure to store .nc nodes data
 - CreateFloor.cs
   * Show **3D** structure in Unity Engine
+  
+Data Path:
+--
+Now there is **no .nc file** in the data path */Assets/StreamingAssets* due to the Space limitation, or we can add some .nc data to the path, and modify the ***DataPath*** variable in **CreateFloor.cs**

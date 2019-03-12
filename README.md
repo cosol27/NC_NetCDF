@@ -14,4 +14,4 @@ The main scripts constrution:
   
 Data Path:
 --
-Now there is **no .nc file** in the data path */Assets/StreamingAssets* due to the Space limitation, or we can add some .nc data to the path, and modify the ***DataPath*** variable in **CreateFloor.cs**
+Now there is **no .nc file** in the data path ***/Assets/StreamingAssets*** due to the Space limitation, or we can add some .nc data to the path, and modify the ***DataPath*** variable in **CreateFloor.cs**

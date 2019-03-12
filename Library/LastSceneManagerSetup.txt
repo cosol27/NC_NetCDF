@@ -1,0 +1,4 @@
+sceneSetups:
+- path: Assets/1.typhoon.unity
+  isLoaded: 1
+  isActive: 1

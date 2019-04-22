@@ -8,7 +8,7 @@ using System.Threading;
 
 using NETCDF_CDL;//调用netcdf
 
-public class Ty_Class:IDisposable // : MonoBehaviour 
+public class Ty_Class : IDisposable // : MonoBehaviour 
 {
     public GameObject floor;
     public Material floorMat;
@@ -30,17 +30,17 @@ public class Ty_Class:IDisposable // : MonoBehaviour
 
     public float[] stackData;
     [NonSerialized]
-    public List<float> oriLatData = new List<float> ();						//lat
-	[NonSerialized]
-    public List<float> oriLogData = new List<float> ();                      //log
-    public List<List<float>>[] oriCloudData = new List<List<float>>[]{};     //clouddata
-    public List<List<float>>[] oriRainData = new List<List<float>>[]{};      //raindata
-    public List<List<float>>[] oriIceData = new List<List<float>>[]{};       //icedata
-    public List<List<float>>[] oriSnowData = new List<List<float>>[]{};      //snowdata
-    public List<List<float>>[] oriGraupData = new List<List<float>>[]{};     //graupdata
+    public List<float> oriLatData = new List<float>();                      //lat
+    [NonSerialized]
+    public List<float> oriLogData = new List<float>();                      //log
+    public List<List<float>>[] oriCloudData = new List<List<float>>[] { };     //clouddata
+    public List<List<float>>[] oriRainData = new List<List<float>>[] { };      //raindata
+    public List<List<float>>[] oriIceData = new List<List<float>>[] { };       //icedata
+    public List<List<float>>[] oriSnowData = new List<List<float>>[] { };      //snowdata
+    public List<List<float>>[] oriGraupData = new List<List<float>>[] { };     //graupdata
     public List<List<float>>[] oriMixData = new List<List<float>>[] { };     //mixdata
 
-    public List<Vector3>[] VoltexPoints = new List<Vector3>[]{ };           //mesh vertices
+    public List<Vector3>[] VoltexPoints = new List<Vector3>[] { };           //mesh vertices
 
     public bool bReadFinish = false;
 
@@ -84,7 +84,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         WeatherVariableNames = Names;
 
         ReadNetCDF(DataPath);
-        
+
     }
 
     /// <summary>
@@ -117,87 +117,96 @@ public class Ty_Class:IDisposable // : MonoBehaviour
     }
 
     public void ReadNetCDF(string path)
-	{
-		int ncidp;
-		int openflag = _netcdf.nc_open(path, _netcdf.CreateMode.NC_NOWRITE, out ncidp);
-		Debug.Log("openflag : " + openflag + " -> ncidp : " + ncidp);
+    {
+        int ncidp;
+        int openflag = _netcdf.nc_open(path, _netcdf.CreateMode.NC_NOWRITE, out ncidp);
+        Debug.Log("openflag : " + openflag + " -> ncidp : " + ncidp);
 
-		int ndims;//dimension
-		int nvars;//变量长度
-		int ngatts;
-		int unlimdimid;
-		int inqflag = _netcdf.nc_inq(ncidp, out ndims, out nvars, out ngatts, out unlimdimid);
+        int ndims;//dimension
+        int nvars;//变量长度
+        int ngatts;
+        int unlimdimid;
+        int inqflag = _netcdf.nc_inq(ncidp, out ndims, out nvars, out ngatts, out unlimdimid);
 
         Debug.Log("result: " + inqflag + " -> ndims : " + ndims + " // nvars : " + nvars + " // ngatts : " + ngatts + " // unlimdimid : " + unlimdimid);
 
         //dimension
         StringBuilder[] dimNames = new StringBuilder[ndims];
-		int[] dimData = new int[ndims];
+        int[] dimData = new int[ndims];
 
-		for (int i = 0; i < ndims; i++)
-		{
-			StringBuilder dimname = new StringBuilder();
-			_netcdf.nc_inq_dim(ncidp, i, dimname, out dimData[i]);
-			dimNames[i] = dimname;
-            Debug.Log("dimData : " + dimNames[i] + "  " + dimData[i]);
+        for (int i = 0; i < ndims; i++)
+        {
+            StringBuilder dimname = new StringBuilder();
+            _netcdf.nc_inq_dim(ncidp, i, dimname, out dimData[i]);
+            dimNames[i] = dimname;
+            //Debug.Log("dimData : " + dimNames[i] + "  " + dimData[i]);
         }
         //variable
         StringBuilder[] varNames = new StringBuilder[nvars];
-		_netcdf.NcType[] varTypes = new _netcdf.NcType[nvars];
-		int varid = 0;
-		StringBuilder varname;
-		for (int i = 0; i < nvars; i++)
-		{
-			varname = new StringBuilder();
-			_netcdf.nc_inq_varname(ncidp, i, varname);									//Name
-			_netcdf.nc_inq_vartype(ncidp, i, out varTypes[i]);							//type
-			_netcdf.nc_inq_varid(ncidp, varname.ToString(), out varid);					//ID
-			varNames[i] = varname;
-            Debug.Log("varname 指针 : " + varid + "  " + varNames[i] + "  " + varTypes[i]);
+        _netcdf.NcType[] varTypes = new _netcdf.NcType[nvars];
+        int varid = 0;
+        StringBuilder varname;
+        for (int i = 0; i < nvars; i++)
+        {
+            varname = new StringBuilder();
+            _netcdf.nc_inq_varname(ncidp, i, varname);                                  //Name
+            _netcdf.nc_inq_vartype(ncidp, i, out varTypes[i]);                          //type
+            _netcdf.nc_inq_varid(ncidp, varname.ToString(), out varid);                 //ID
+            varNames[i] = varname;
+            //Debug.Log("varname 指针 : " + varid + "  " + varNames[i] + "  " + varTypes[i]);
         }
 
         // data length must be 420*450*34*3, otherwise read fails(*************IMPORTANT)
-        timeCount = dimData [0];
-		fromtopCount = dimData [4];
-		latlogCount = dimData [2] * dimData [3];
+        timeCount = dimData[0];
+        fromtopCount = dimData[4];
+        latlogCount = dimData[2] * dimData[3];
         lat = dimData[2];
         log = dimData[3];
 
-		allDataCount = dimData [2] * dimData [3] * dimData [4] * dimData [0];
+        allDataCount = dimData[2] * dimData[3] * dimData[4] * dimData[0];
 
-		//lat data
-		float[] curdata = new float[allDataCount];
-		int getlat = _netcdf.nc_get_var_float(ncidp, 1, curdata);
+        float[] curdata = new float[allDataCount];
+        // 之前读取过就不必读取经纬度坐标，加快IO读取速度
+        if (VoltexPoints.Length == 0)
+        {
+            //lat data
+            int getlat = _netcdf.nc_get_var_float(ncidp, 1, curdata);
 
-		if(getlat != 0)
-			Debug.Log ("latdata: read with error: " + getlat);
-        for (int i = 0; i < latlogCount; i++) {
-			oriLatData.Add (curdata[i]);
-		}
-        //Write_file(oriLatData, "LatData.txt");
-        //yield return new WaitForFixedUpdate();
+            if (getlat != 0)
+                Debug.Log("latdata: read with error: " + getlat);
+            for (int i = 0; i < latlogCount; i++)
+            {
+                oriLatData.Add(curdata[i]);
+            }
+            //Write_file(oriLatData, "LatData.txt");
+            //yield return new WaitForFixedUpdate();
 
-		//log data
-		int getlog = _netcdf.nc_get_var_float(ncidp, 2, curdata);
-		if(getlog != 0)
-			Debug.Log ("logdata: read with error: " + getlog);
-        for (int i = 0; i < latlogCount; i++) {
-			oriLogData.Add (curdata[i]);
-		}
-        //Write_file(oriLogData, "LogData.txt");
-        //yield return new WaitForFixedUpdate();
+            //log data
+            int getlog = _netcdf.nc_get_var_float(ncidp, 2, curdata);
+            if (getlog != 0)
+                Debug.Log("logdata: read with error: " + getlog);
+            for (int i = 0; i < latlogCount; i++)
+            {
+                oriLogData.Add(curdata[i]);
+            }
+            //Write_file(oriLogData, "LogData.txt");
+            //yield return new WaitForFixedUpdate();
 
-		//construct virtual points
-		VoltexPoints = new List<Vector3>[fromtopCount];
-		for (int i = 0; i < fromtopCount; i++) {
-			List<Vector3> plane_points = new List<Vector3> ();
-			for (int j = 0; j < latlogCount; j++) {
-                Vector3 point = new Vector3(oriLogData[j], i * FloorGap + FloorGap * UnityEngine.Random.Range(-0.1f, 0.1f), oriLatData[j]);
-				plane_points.Add (point);
-			}
-			VoltexPoints [i] = plane_points;
-		}
-        //yield return new WaitForFixedUpdate();
+            //construct virtual points
+            VoltexPoints = new List<Vector3>[fromtopCount];
+            for (int i = 0; i < fromtopCount; i++)
+            {
+                List<Vector3> plane_points = new List<Vector3>();
+                for (int j = 0; j < latlogCount; j++)
+                {
+                    Vector3 point = new Vector3(oriLogData[j], i * FloorGap + FloorGap * UnityEngine.Random.Range(-0.1f, 0.1f), oriLatData[j]);
+                    plane_points.Add(point);
+                }
+                VoltexPoints[i] = plane_points;
+            }
+            //yield return new WaitForFixedUpdate();
+        }
+
 
         //cloud data
         if (WeatherVariableNames.Contains("Cloud"))
@@ -236,7 +245,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
             oriIceData = ReConstructData(curdata, timeCount, fromtopCount, latlogCount);
             //Write_file(oriCloudData[0][15], "IceData.txt");
         }
-        
+
         //yield return new WaitForFixedUpdate();
 
         //snow data
@@ -257,7 +266,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
             if (getgraup != 0)
                 Debug.Log("graupdata: read with error: " + getgraup);
 
-            oriGraupData = ReConstructData(curdata, timeCount, fromtopCount, latlogCount); 
+            oriGraupData = ReConstructData(curdata, timeCount, fromtopCount, latlogCount);
         }
 
         //yield return new WaitForFixedUpdate();
@@ -266,7 +275,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         if (WeatherVariableNames.Contains("All"))
         {
             float[] curdatax = new float[allDataCount];
-            
+
             //get cloud data
             int getcloud = _netcdf.nc_get_var_float(ncidp, 3, curdatax);
             if (getcloud != 0)
@@ -328,13 +337,13 @@ public class Ty_Class:IDisposable // : MonoBehaviour
             //Array.Clear(curdata7, 0, allDataCount);
 
             oriMixData = ReConstructData(curdata, timeCount, fromtopCount, latlogCount);
-            
+
         }
 
         // 求得最大值
         for (int i = 0; i < allDataCount; ++i)
         {
-            if(curdata[i] > MaxData)
+            if (curdata[i] > MaxData)
             {
                 MaxData = curdata[i];
                 MaxDataIndex = i + 1;
@@ -342,9 +351,10 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         }
 
         int closeflag = _netcdf.nc_close(ncidp);//close file
-		if (closeflag == (int)_netcdf.ResultCode.NC_NOERR) {
-			Debug.Log("file indexer release sucessfully! ");
-		}
+        if (closeflag == (int)_netcdf.ResultCode.NC_NOERR)
+        {
+            Debug.Log("file indexer release sucessfully! ");
+        }
 
         bReadFinish = true;
 
@@ -401,7 +411,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
 
         //stack data
         stackData = new float[allDataCount];
-        
+
         //cloud data
         if (WeatherVariableNames.Contains("Cloud"))
         {
@@ -533,7 +543,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
     /// 输入变量名，模拟指定变量全时间状态变化
     /// </summary>
     /// <param name="WeatherVariableName">变量名称</param>
-    public void ShowSomeVariableSimulation(string WeatherVariableName,int o)
+    public void ShowSomeVariableSimulation(string WeatherVariableName, int o)
     {
         Color WeatherColor = Color.clear;
         List<List<float>> curdb = new List<List<float>>();
@@ -610,16 +620,16 @@ public class Ty_Class:IDisposable // : MonoBehaviour
             }
         }
 
-        //渲染y轴面
-        for (int px = 0; px < 420; ++px)
+        List<Vector3>[] tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, "y");
+        List<float>[] tmp_curdb = ReConstruct_Curdb(curdb, "y");
+        //渲染y轴面，即xz平面
+        for (int py = 0; py < 13; ++py)
         {
             GameObject obj = GameObject.Instantiate(floor);
             obj.transform.parent = GameObject.Find(WeatherVariableName + "Mesh").transform;
-            obj.name = WeatherVariableName + "MeshObject__Y " + px;
+            obj.name = WeatherVariableName + "MeshObject__Y " + py;
 
-            List<Vector3> tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, "x", px);
-            List<float> tmp_curdb = ReConstruct_Curdb(curdb, "x", px);
-            Mesh newMesh = SetNewMeshXY(tmp_Voltexpoints, tmp_curdb, WeatherVariableName, "x", !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));
+            Mesh newMesh = SetNewMeshXY(tmp_Voltexpoints[py], tmp_curdb[py], WeatherVariableName, "y", !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));
 
             //int leng = newMesh.Length;
             for (int i = 0; i < 1; i++)
@@ -633,16 +643,16 @@ public class Ty_Class:IDisposable // : MonoBehaviour
             }
         }
 
+        tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, "x");
+        tmp_curdb = ReConstruct_Curdb(curdb, "x");
         //渲染x轴面
-        for (int py = 0; py < 450; ++py)
+        for (int px = 0; px < 14; ++px)
         {
             GameObject obj = GameObject.Instantiate(floor);
             obj.transform.parent = GameObject.Find(WeatherVariableName + "Mesh").transform;
-            obj.name = WeatherVariableName + "MeshObject__X " + py;
+            obj.name = WeatherVariableName + "MeshObject__X " + px;
 
-            List<Vector3> tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, "y", py);
-            List<float> tmp_curdb = ReConstruct_Curdb(curdb, "y", py);
-            Mesh newMesh = SetNewMeshXY(tmp_Voltexpoints, tmp_curdb, WeatherVariableName, "y", !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));
+            Mesh newMesh = SetNewMeshXY(tmp_Voltexpoints[px], tmp_curdb[px], WeatherVariableName, "y", !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));
 
             //int leng = newMesh.Length;
             for (int i = 0; i < 1; i++)
@@ -819,7 +829,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         //{
         //    curdb = oriMixData;
         //}
-        
+
         for (int t = 0; t < timeCount; ++t)
         {
             if (stackData == null)
@@ -828,7 +838,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         }
 
         return tmpdb;
-        
+
     }
 
 
@@ -841,41 +851,115 @@ public class Ty_Class:IDisposable // : MonoBehaviour
     /// <param name="fromtopCount">Fromtop count.</param>
     /// <param name="latlogCount">Latlog count.</param>
     List<List<float>>[] ReConstructData(float[] originaldata, int timeCount, int fromtopCount, int latlogCount)
-	{
+    {
         List<List<float>>[] ConstructData = new List<List<float>>[timeCount];
-		for (int i = 0; i < timeCount; i++) {
-			List<List<float>> fromtop = new List<List<float>> ();
-			for (int j = 0; j < fromtopCount; j++) {
-				List<float> temp = new List<float> ();
-				for (int k = 0; k < latlogCount; k++) {
-					temp.Add (originaldata [k + latlogCount * j + latlogCount * fromtopCount * i]);
-//					if (temp [k] > 0.001f) {
-//						Debug.Log (temp[k]);
-//						break;
-//					}
-				}
-				fromtop.Add (temp);
-			}
-			ConstructData [i] = fromtop;
-		}
+        for (int i = 0; i < timeCount; i++)
+        {
+            List<List<float>> fromtop = new List<List<float>>();
+            for (int j = 0; j < fromtopCount; j++)
+            {
+                List<float> temp = new List<float>();
+                for (int k = 0; k < latlogCount; k++)
+                {
+                    temp.Add(originaldata[k + latlogCount * j + latlogCount * fromtopCount * i]);
+                    //					if (temp [k] > 0.001f) {
+                    //						Debug.Log (temp[k]);
+                    //						break;
+                    //					}
+                }
+                fromtop.Add(temp);
+            }
+            ConstructData[i] = fromtop;
+        }
 
         return ConstructData;
-	}
+    }
 
-    List<Vector3> ReConstruct_VoltexPoints(List<Vector3>[] VoltexPoints,string axis,int p)
+    List<Vector3>[] ReConstruct_VoltexPoints(List<Vector3>[] VoltexPoints, string axis)
     {
-        List<Vector3> tmp_p = new List<Vector3>();
+        int arrcount;
+        List<Vector3>[] tmp_p = new List<Vector3>[] { };
         if (axis.ToLower() == "x")
         {
-            foreach(List<Vector3> v in VoltexPoints)
+            arrcount = 14;
+            tmp_p = new List<Vector3>[arrcount];
+            for (int i = 0; i < arrcount; ++i)
             {
-                for(int i = 0; i < 450; ++i)
+                tmp_p[i] = new List<Vector3>();
+                foreach (List<Vector3> v in VoltexPoints)
                 {
-                    tmp_p.Add(v[450 * p + i]);
+                    for (int ii = 30; ii < 420; ii += 30)
+                    {
+                        tmp_p[i].Add(v[(i + 1) * 30 + 450 * ii]);
+                    }
+                }
+            }
+
+        }
+        else if (axis.ToLower() == "y")
+        {
+            arrcount = 13;
+            tmp_p = new List<Vector3>[arrcount];
+            for (int i = 0; i < arrcount; ++i)
+            {
+                tmp_p[i] = new List<Vector3>();
+                foreach (List<Vector3> v in VoltexPoints)
+                {
+                    for (int ii = 30; ii < 450; ii += 30)
+                    {
+                        tmp_p[i].Add(v[450 * (i + 1) * 30 + ii]);
+                    }
+                }
+            }
+        }
+        return tmp_p;
+    }
+
+    List<float>[] ReConstruct_Curdb(List<List<float>> curdb, string axis)
+    {
+        int arrcount;
+        List<float>[] tmp_db = new List<float>[] { };
+        if (axis.ToLower() == "x")
+        {
+            arrcount = 14;
+            tmp_db = new List<float>[arrcount];
+            for (int i = 0; i < arrcount; ++i)
+            {
+                tmp_db[i] = new List<float>();
+                foreach (List<float> db in curdb)
+                {
+                    for (int ii = 30; ii < 420; ii += 30)
+                    {
+                        tmp_db[i].Add(db[(i + 1) * 30 + 450 * ii]);
+                    }
                 }
             }
         }
         else if (axis.ToLower() == "y")
+        {
+            arrcount = 13;
+            tmp_db = new List<float>[arrcount];
+            for (int i = 0; i < arrcount; ++i)
+            {
+                tmp_db[i] = new List<float>();
+                foreach (List<float> db in curdb)
+                {
+                    for (int ii = 30; ii < 450; ii += 30)
+                    {
+                        tmp_db[i].Add(db[450 * (i + 1) * 30 + ii]);
+                    }
+                }
+            }
+
+        }
+
+        return tmp_db;
+    }
+
+    List<Vector3> ReConstruct_VoltexPoints(List<Vector3>[] VoltexPoints, string axis, int p)
+    {
+        List<Vector3> tmp_p = new List<Vector3>();
+        if (axis.ToLower() == "x")
         {
             foreach (List<Vector3> v in VoltexPoints)
             {
@@ -883,16 +967,39 @@ public class Ty_Class:IDisposable // : MonoBehaviour
                 {
                     tmp_p.Add(v[p + 450 * i]);
                 }
+
             }
         }
-        
+        else if (axis.ToLower() == "y")
+        {
+            foreach (List<Vector3> v in VoltexPoints)
+            {
+                for (int i = 0; i < 450; ++i)
+                {
+                    tmp_p.Add(v[450 * p + i]);
+                }
+            }
+        }
+
         return tmp_p;
     }
-    
+
     List<float> ReConstruct_Curdb(List<List<float>> curdb, string axis, int p)
     {
         List<float> tmp_db = new List<float>();
         if (axis.ToLower() == "x")
+        {
+            foreach (List<float> db in curdb)
+            {
+                for (int i = 0; i < 420; ++i)
+                {
+                    tmp_db.Add(db[p + 450 * i]);
+                }
+
+            }
+
+        }
+        else if (axis.ToLower() == "y")
         {
             foreach (List<float> db in curdb)
             {
@@ -901,19 +1008,8 @@ public class Ty_Class:IDisposable // : MonoBehaviour
                     tmp_db.Add(db[450 * p + i]);
                 }
             }
+        }
 
-        }
-        else if (axis.ToLower() == "y") 
-        {
-            foreach (List<float> db in curdb)
-            {
-                for (int i = 0; i < 420; ++i)
-                {
-                    tmp_db.Add(db[p + 450 * i]);
-                }
-            }
-        }
-        
         return tmp_db;
     }
 
@@ -928,7 +1024,6 @@ public class Ty_Class:IDisposable // : MonoBehaviour
                 objChild = obj.transform.GetChild(i).gameObject;
                 if (objChild.name.Split(' ')[1] == layerMark.ToString() && objChild.name.Contains(axis.ToUpper()))
                 {
-                    Debug.Log(objChild.name);
                     foreach (Transform cchild in objChild.transform)
                     {
                         switch (axis.ToLower())
@@ -960,7 +1055,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
     Mesh[] SetNewMesh(List<Vector3> vertices, List<float> Construct_i_Data, string WeatherVariableName, bool colorful)
     {
 
-        int count = 42;
+        int count = 14;
         int VerCount = 11;
         float proportion;
         Color c = Color.clear;
@@ -1091,12 +1186,12 @@ public class Ty_Class:IDisposable // : MonoBehaviour
                         Construct_i_Data[3 * (k * VerCount + i - k) * 450 + 3 * j + 3] <= graup_mask_rate * MaxData &&
                         Construct_i_Data[3 * (k * VerCount + i - k + 1) * 450 + 3 * j + 3] <= graup_mask_rate * MaxData)
                         continue;
-                    else if(WeatherVariableName.Contains("All") &&
+                    else if (WeatherVariableName.Contains("All") &&
                         Construct_i_Data[3 * (k * VerCount + i - k) * 450 + 3 * j] <= all_mask_rate * MaxData &&
                         Construct_i_Data[3 * (k * VerCount + i - k) * 450 + 3 * j + 3] <= all_mask_rate * MaxData &&
                         Construct_i_Data[3 * (k * VerCount + i - k + 1) * 450 + 3 * j + 3] <= all_mask_rate * MaxData)
                         continue;
-                    
+
                     //triagles.Add (i * 450 + j + 0);
                     //triagles.Add (i * 450 + j + 1);
                     //triagles.Add (i * 450 + j + 1 + 450);
@@ -1120,22 +1215,18 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         return myMesh;
     }
 
-
     Mesh SetNewMeshXY(List<Vector3> vertices, List<float> Construct_i_Data, string WeatherVariableName, string axis, bool colorful)
     {
-
-        //Debug.Log("Vertises count: " + vertices.Count);
-
         int count = 27;
         int VerCount = 1;
 
         if (axis.ToLower() == "x")
         {
-            VerCount = 450;
+            VerCount = 14;
         }
         else if (axis.ToLower() == "y")
         {
-            VerCount = 420;
+            VerCount = 13;
         }
 
         float proportion;
@@ -1151,7 +1242,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         {
             int dataindex = i;
 
-            for (int j = 0; j < VerCount; j += 3)
+            for (int j = 0; j < VerCount; ++j)
             {
                 newVecs.Add(vertices[dataindex * VerCount + j]);        //  添加mesh坐标
                                                                         //需要彩色显示
@@ -1196,7 +1287,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
                 //不需要彩色显示
                 else
                 {
-                    proportion = 0.75f + 0.25f * Construct_i_Data[dataindex * 27 + j] / MaxData;
+                    proportion = 0.75f + 0.25f * Construct_i_Data[dataindex * VerCount + j] / MaxData;
                     if (WeatherVariableName == "Cloud" || WeatherVariableName == "All")
                     {
                         c = new Color(proportion, proportion, proportion, Opacity);
@@ -1226,51 +1317,51 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         myMesh.colors = newC.ToArray();
 
         List<int> triagles = new List<int>();
-        for (int i = 0; i < count - 1; i++)
+        for (int i = 0; i < count - 1; ++i)
         {
-            for (int j = 0; j < VerCount / 3 - 2; j++)
+            for (int j = 0; j < VerCount - 1; j++)
             {
                 //if (Construct_i_Data[2 * (k * VerCount + i - k) * 450 + 2 * j] < 8 * 1e-5)        //物理值为0 直接跳过
-                if (Construct_i_Data[i * VerCount + 3 * j] == 0 && Construct_i_Data[i * VerCount + 3 * j + 3] == 0 && Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] == 0)       //物理值为0 直接跳过
+                if (Construct_i_Data[i * VerCount + j] < 10 * 1e-5 || Construct_i_Data[i * VerCount + j + 1] < 10 * 1e-5 || Construct_i_Data[(i + 1) * VerCount + j + 1] < 10 * 1e-5)       //物理值为0 直接跳过
                     continue;
 
                 if (WeatherVariableName.Contains("Cloud") &&
-                    Construct_i_Data[i * VerCount + 3 * j] <= cloud_mask_rate * MaxData &&
-                    Construct_i_Data[i * VerCount + 3 * j + 3] <= cloud_mask_rate * MaxData &&
-                    Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] <= cloud_mask_rate * MaxData)
+                    Construct_i_Data[i * VerCount + j] <= cloud_mask_rate * MaxData &&
+                    Construct_i_Data[i * VerCount + j + 1] <= cloud_mask_rate * MaxData &&
+                    Construct_i_Data[(i + 1) * VerCount + j + 1] <= cloud_mask_rate * MaxData)
                     continue;
                 else if (WeatherVariableName.Contains("Rain") &&
-                    Construct_i_Data[i * VerCount + 3 * j] <= rain_mask_rate * MaxData &&
-                    Construct_i_Data[i * VerCount + 3 * j + 3] <= rain_mask_rate * MaxData &&
-                    Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] <= rain_mask_rate * MaxData)
+                    Construct_i_Data[i * VerCount + j] <= rain_mask_rate * MaxData &&
+                    Construct_i_Data[i * VerCount + j + 1] <= rain_mask_rate * MaxData &&
+                    Construct_i_Data[(i + 1) * VerCount + j + 1] <= rain_mask_rate * MaxData)
                     continue;
                 else if (WeatherVariableName.Contains("Ice") &&
-                    Construct_i_Data[i * VerCount + 3 * j] <= ice_mask_rate * MaxData &&
-                    Construct_i_Data[i * VerCount + 3 * j + 3] <= ice_mask_rate * MaxData &&
-                    Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] <= ice_mask_rate * MaxData)
+                    Construct_i_Data[i * VerCount + j] <= ice_mask_rate * MaxData &&
+                    Construct_i_Data[i * VerCount + j + 1] <= ice_mask_rate * MaxData &&
+                    Construct_i_Data[(i + 1) * VerCount + j + 1] <= ice_mask_rate * MaxData)
                     continue;
                 else if (WeatherVariableName.Contains("Snow") &&
-                    Construct_i_Data[i * VerCount + 3 * j] <= snow_mask_rate * MaxData &&
-                    Construct_i_Data[i * VerCount + 3 * j + 3] <= snow_mask_rate * MaxData &&
-                    Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] <= snow_mask_rate * MaxData)
+                    Construct_i_Data[i * VerCount + j] <= snow_mask_rate * MaxData &&
+                    Construct_i_Data[i * VerCount + j + 1] <= snow_mask_rate * MaxData &&
+                    Construct_i_Data[(i + 1) * VerCount + j + 1] <= snow_mask_rate * MaxData)
                     continue;
                 else if (WeatherVariableName.Contains("Graupel") &&
-                    Construct_i_Data[i * VerCount + 3 * j] <= graup_mask_rate * MaxData &&
-                    Construct_i_Data[i * VerCount + 3 * j + 3] <= graup_mask_rate * MaxData &&
-                    Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] <= graup_mask_rate * MaxData)
+                    Construct_i_Data[i * VerCount + j] <= graup_mask_rate * MaxData &&
+                    Construct_i_Data[i * VerCount + j + 1] <= graup_mask_rate * MaxData &&
+                    Construct_i_Data[(i + 1) * VerCount + j + 1] <= graup_mask_rate * MaxData)
                     continue;
                 else if (WeatherVariableName.Contains("All") &&
-                    Construct_i_Data[i * VerCount + 3 * j] <= all_mask_rate * MaxData &&
-                    Construct_i_Data[i * VerCount + 3 * j + 3] <= all_mask_rate * MaxData &&
-                    Construct_i_Data[(i + 1) * VerCount + 3 * j + 3] <= all_mask_rate * MaxData)
+                    Construct_i_Data[i * VerCount + j] <= all_mask_rate * MaxData &&
+                    Construct_i_Data[i * VerCount + j + 1] <= all_mask_rate * MaxData &&
+                    Construct_i_Data[(i + 1) * VerCount + j + 1] <= all_mask_rate * MaxData)
                     continue;
 
-                triagles.Add(i * VerCount / 3 + j + 0);
-                triagles.Add(i * VerCount / 3 + j + 1);
-                triagles.Add(i * VerCount / 3 + j + 1 + VerCount / 3);
-                triagles.Add(i * VerCount / 3 + j + 1 + VerCount / 3);
-                triagles.Add(i * VerCount / 3 + j + 0 + VerCount / 3);
-                triagles.Add(i * VerCount / 3 + j + 0);
+                triagles.Add(i * VerCount + j + 0);
+                triagles.Add(i * VerCount + j + 1);
+                triagles.Add(i * VerCount + j + 1 + VerCount);
+                triagles.Add(i * VerCount + j + 1 + VerCount);
+                triagles.Add(i * VerCount + j + 0 + VerCount);
+                triagles.Add(i * VerCount + j + 0);
                 //triagles.Add(i * VerCount / 3 + j + 1);
                 //triagles.Add(i * VerCount / 3 + j + 0);
                 //triagles.Add(i * VerCount / 3 + j + 1 + VerCount / 3);
@@ -1289,7 +1380,7 @@ public class Ty_Class:IDisposable // : MonoBehaviour
         return myMesh;
     }
 
-    public static void Write_File(List<float> lf,string VariableName, string FileName)
+    public static void Write_File(List<float> lf, string VariableName, string FileName)
     {
         FileStream fs = new FileStream(Application.dataPath + @"/StreamingAssets/" + FileName, FileMode.Create);
         StreamWriter sw = new StreamWriter(fs);

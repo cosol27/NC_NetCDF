@@ -95,11 +95,6 @@
     <None Include="Assets\DOTween\DOTween.XML" />
     <None Include="Assets\DOTween\Editor\DOTweenEditor.XML" />
     <None Include="Assets\DOTween\readme.txt" />
-    <None Include="Assets\StreamingAssets\1.typhoon\CloudData.txt" />
-    <None Include="Assets\StreamingAssets\1.typhoon\IceData.txt" />
-    <None Include="Assets\StreamingAssets\1.typhoon\LatData.txt" />
-    <None Include="Assets\StreamingAssets\1.typhoon\LogData.txt" />
-    <None Include="Assets\StreamingAssets\1.typhoon\RainData.txt" />
     <None Include="Assets\StreamingAssets\AllData.txt" />
     <None Include="Assets\StreamingAssets\CloudData.txt" />
     <None Include="Assets\StreamingAssets\GraupelData.txt" />

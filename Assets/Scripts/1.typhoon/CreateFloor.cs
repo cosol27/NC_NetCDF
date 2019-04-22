@@ -11,7 +11,7 @@ public class CreateFloor : MonoBehaviour
 
     public GameObject floor;
     public Material floorMat;
-    public GameObject maincamera, aidcamera, curvecamera;
+    public GameObject maincamera, aidcamera, mapcamera, curvecamera;
 
     string DataPath;
 
@@ -37,21 +37,12 @@ public class CreateFloor : MonoBehaviour
     List<string> WeatherVariableNames;
 
     int LayerNumber = 15,
-        Logitude = 0,
+        Longitude = 0,
         Latitude = 0;
     // Use this for initialization
     void Start()
     {
-        //if (null == floor)
-        //{
-        //    Debug.Log("floor is null");
-        //}
-        //else
-        //{
-        //    //Debug.Log("Submeshes: " + floor.GetComponent<MeshFilter>().mesh.subMeshCount);
-        //}
-        //maincamera = GameObject.Find("MainViewCamera");
-        //aidcamera = GameObject.Find("AidViewCamera");
+        mapcamera = GameObject.Find("MapCamera");
 
         maincamera.SetActive(true);
         aidcamera.SetActive(false);
@@ -59,14 +50,6 @@ public class CreateFloor : MonoBehaviour
 
         Resources.UnloadUnusedAssets();
         System.GC.Collect();
-        
-        //WeatherVariableNames = new List<string>() { "Cloud" };
-
-        //coroutine = StartCoroutine(ShowAllTimeSimulation());
-        //StartCoroutine(IExtractVariables());
-
-        //dropdown_string = "ShowAllTimeSimulation";
-        //StartCoroutine(GetNcMax());
     }
 
     // Update is called once per frame
@@ -102,22 +85,31 @@ public class CreateFloor : MonoBehaviour
         if (show_dropdown.value == 0)
         {
             dropdown_string = "ShowAllTimeSimulation";
+            mapcamera.SetActive(true);
         }
         else if (show_dropdown.value == 1)
         {
             dropdown_string = "ShowAllTimeSomeLayerSimulation";
+            mapcamera.SetActive(false);
         }
 
         //Animation_LayerNumber 变量变化
-        if (Animation_LayerNumber.text != "")
+        if (Animation_LayerNumber.text != "") 
         {
             //Debug.Log(Animation_LayerNumber.text);
             int L = Convert.ToInt16(Animation_LayerNumber.text);
             if (L > -1 && L < 450)
+            {
+                if (LayerNumber != L)
+                    Debug.Log("LayerNumber: " + L);
                 LayerNumber = L;
-            //Debug.Log("LayerNumber: " + LayerNumber);
+                layerMark = L;
+            }
         }
-        
+
+        //防止Ray UI穿透问题
+        if (!UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject())
+            CatchHitPos();
     }
 
     public void AnimationShow()
@@ -132,6 +124,102 @@ public class CreateFloor : MonoBehaviour
         maincamera.SetActive(true);
         aidcamera.SetActive(false);
         curvecamera.SetActive(false);
+    }
+
+    void CatchHitPos()
+    {
+        RaycastHit hitInfo;
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        if (Input.GetMouseButton(0))
+        {
+            if (Physics.Raycast(ray, out hitInfo, 100) && hitInfo.transform.gameObject.name == "Map")
+            {
+                if (hitInfo.point.x > 108 && hitInfo.point.x < 121 && hitInfo.point.z > 16 && hitInfo.point.z < 27)
+                    Debug.Log("hitinfo pos:" + hitInfo.point);
+            }
+        }
+    }
+
+    public void VortexShow()
+    {
+        StopAllCoroutines();
+        ClearMesh();
+        Debug.Log("vortexshow");
+
+        DataPath = Application.dataPath + @"/StreamingAssets/1.typhoon/wrfout_typhoon_001.nc";
+
+        if (!System.IO.File.Exists(DataPath))
+            Debug.Log("File doesn't exist!  " + DataPath);
+        else
+            Debug.Log(DataPath);
+        ty = new Ty_Class(DataPath, floor, floorMat, WeatherVariableNames);
+
+        List<Vector3> VortexList = new List<Vector3>();
+
+        for(int i = 0; i < 20;i+=2)
+        {
+            for(int j=0;j<420;j+=20)
+            {
+                for (int k = 0; k < 450; k += 20)
+                {
+                    GameObject sphereObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    sphereObj.transform.parent = GameObject.Find("PointCloud").transform;
+                    sphereObj.transform.position = ty.VoltexPoints[i][450 * j + k];
+                    sphereObj.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                    VortexList.Add(ty.VoltexPoints[i][450 * j + k]);
+                }
+            }
+        }
+
+        int count = 0;
+        Vector3[] veCluster = new Vector3[15];
+        int[] countCluster = new int[15];
+        //初始化
+        for (int i = 0; i < veCluster.Length; ++i)
+        {
+            veCluster[i] = VortexList[i];
+            countCluster[i] = 1;
+        }
+
+        while (true)
+        {
+            foreach(Vector3 vortex in VortexList)
+            {
+                int k = 0;
+                float dis = float.MaxValue;
+                for (int i = 0; i < veCluster.Length; ++i)
+                {
+                    if ((vortex - veCluster[i]).magnitude < dis)
+                    {
+                        dis = (vortex - veCluster[i]).magnitude;
+                        k = i;
+                    }
+                }
+
+                veCluster[k] = (veCluster[k] * countCluster[k] + vortex) / (++countCluster[k]);
+
+            }
+
+            ++count;
+            if (count > 100)
+                break;
+
+        }
+
+        foreach(Vector3 ve in veCluster)
+        {
+            GameObject sphereObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphereObj.transform.parent = GameObject.Find("PointCloud").transform;
+            sphereObj.transform.position = ve;
+            sphereObj.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            sphereObj.GetComponent<Renderer>().material.color = Color.red;
+        }
+
+        Debug.Log(VortexList.Count);
+        Debug.Log(countCluster[0] + " " + countCluster[1]);
+
+        Resources.UnloadUnusedAssets();
+        System.GC.Collect();
     }
 
     public void Clear()
@@ -171,13 +259,13 @@ public class CreateFloor : MonoBehaviour
         {
             if (maincamera.activeInHierarchy == true)
             {
-                Debug.Log("main");
+                Debug.Log("aid");
                 maincamera.SetActive(false);
                 aidcamera.SetActive(true);
             }
             else
             {
-                Debug.Log("aid");
+                Debug.Log("main");
                 aidcamera.SetActive(false);
                 maincamera.SetActive(true);
             }
@@ -217,7 +305,7 @@ public class CreateFloor : MonoBehaviour
                 foreach (string name in WeatherVariableNames)
                 {
                     ty.ShowSomeVariableSimulation(name, t);
-                    Debug.Log(layerMark);
+                    //Debug.Log(layerMark);
                     ty.setLayerMark(name, "z", layerMark);
                     yield return null;
                 }
@@ -241,9 +329,8 @@ public class CreateFloor : MonoBehaviour
 
             ty.oriLatData.Clear();
             ty.oriLogData.Clear();
-            foreach (List<Vector3> points in ty.VoltexPoints)
-                points.Clear();
-            Debug.Log(ty.oriLogData.Count);
+            //foreach (List<Vector3> points in ty.VoltexPoints)
+            //    points.Clear();
 
             Resources.UnloadUnusedAssets();
             System.GC.Collect();
@@ -306,8 +393,8 @@ public class CreateFloor : MonoBehaviour
             }
             ty.oriLatData.Clear();
             ty.oriLogData.Clear();
-            foreach (List<Vector3> points in ty.VoltexPoints)
-                points.Clear();
+            //foreach (List<Vector3> points in ty.VoltexPoints)
+            //    points.Clear();
             Debug.Log(ty.oriLogData.Count);
 
             Resources.UnloadUnusedAssets();
@@ -345,7 +432,7 @@ public class CreateFloor : MonoBehaviour
 
             ty = new Ty_Class(DataPath, WeatherVariableNames);
 
-            List<float> tmp = ty.GetCertainPointWholeTimeValues(WeatherVariableNames, Logitude, Latitude, LayerNumber);
+            List<float> tmp = ty.GetCertainPointWholeTimeValues(WeatherVariableNames, Longitude, Latitude, LayerNumber);
 
             foreach(float ff in tmp)
             {
@@ -410,131 +497,5 @@ public class CreateFloor : MonoBehaviour
         }
         sw.Close();
     }
-
-    //Mesh[] SetNewMesh(List<Vector3> vertices, List<float> Construct_i_Data)
-    //{
-
-    //    int count = 21;
-    //    int VerCount = 21;
-    //    float MaxData = 0.002351127f,
-    //          MinData = 0.0f;
-    //    Color c = new Color(1, 1, 1, Opacity);
-
-    //    Mesh[] myMesh = new Mesh[count];
-    //    for (int k = 0; k < count; k++)
-    //    {
-    //        myMesh[k] = new Mesh();
-    //        List<Vector3> newVecs = new List<Vector3>();        //初始化顶点坐标
-    //        List<Color> newC = new List<Color>();               //初始化顶点颜色
-
-    //        for (int i = 0; i < VerCount; i++)
-    //        {
-    //            int dataindex = k * VerCount + i;
-    //            dataindex = dataindex - k;
-    //            if (dataindex > 419)
-    //                break;
-    //            for (int j = 0; j < 450; j++)
-    //            {
-    //                newVecs.Add(vertices[dataindex * 450 + j]);         //  添加mesh坐标
-    //                newC.Add(c);
-    //                float value = (MaxData - Construct_i_Data[dataindex * 450 + j]) / (MaxData - MinData);
-    //                value = value < 0 ? 0 : value;
-    //                value = value > 1 ? 1 : value;
-    //                //将HSV的颜色值转为RGB的颜色值
-    //                if (value == 1)
-    //                    newC.Add(new Color(0, 0, 0, 0));
-    //                else
-    //                    newC.Add(Color.HSVToRGB(value * 2 / 3, 1, 1, false));
-    //            }
-    //        }
-    //        myMesh[k].vertices = newVecs.ToArray();
-    //        myMesh[k].colors = newC.ToArray();
-    //        Debug.Log("Vecs: " + newVecs.Count);
-
-    //        List<int> triagles = new List<int>();
-    //        for (int i = 0; i < VerCount - 1; i++)
-    //        {
-
-    //            if (i + k * VerCount - k > 418)         //维度索引最多到419, 超出419 out of range
-    //                break;
-
-    //            for (int j = 0; j < 449; j++)
-    //            {
-    //                if (Construct_i_Data[(k * VerCount + i - k) * 450 + j] == 0)            //物理值为0 直接跳过
-    //                    continue;
-    //                triagles.Add(i * 450 + j + 0);
-    //                triagles.Add(i * 450 + j + 1);
-    //                triagles.Add(i * 450 + j + 1 + 450);
-    //                triagles.Add(i * 450 + j + 1 + 450);
-    //                triagles.Add(i * 450 + j + 0 + 450);
-    //                triagles.Add(i * 450 + j + 0);
-    //                triagles.Add(i * 450 + j + 1);
-    //                triagles.Add(i * 450 + j + 0);
-    //                triagles.Add(i * 450 + j + 1 + 450);
-    //                triagles.Add(i * 450 + j + 0 + 450);
-    //                triagles.Add(i * 450 + j + 1 + 450);
-    //                triagles.Add(i * 450 + j + 0);
-    //            }
-    //        }
-    //        Debug.Log("Tragles: " + triagles.Count);
-    //        myMesh[k].triangles = triagles.ToArray();
-    //        myMesh[k].RecalculateNormals();
-    //        myMesh[k].RecalculateBounds();
-    //    }
-
-    //    return myMesh;
-    //}
-
-    //List<Color>[] SetNewColor(List<float> Construct_i_Data)
-    //{
-    //    //float MaxData = float.MinValue,
-    //    //      MinData = float.MaxValue;
-
-    //    //for (int h = 0; h < Construct_i_Data.Count; ++h)
-    //    //{
-    //    //    for (int i = 0; i < Construct_i_Data[h].Count; ++i)
-    //    //    {
-    //    //        if (MaxData < Construct_i_Data[h][i])
-    //    //            MaxData = Construct_i_Data[h][i];
-    //    //        if (MinData > Construct_i_Data[h][i])
-    //    //            MinData = Construct_i_Data[h][i];
-    //    //    }
-    //    //}
-    //    //Debug.Log("Max: " + MaxData + ", Min: " + MinData);
-
-    //    int count = 21;
-    //    int VerCount = 21;
-    //    float MaxData = 0.002351127f,
-    //          MinData = 0.0f;
-
-    //    List<Color>[] myColor = new List<Color>[count];
-
-    //    for (int k = 0; k < count; ++k)
-    //    {
-    //        myColor[k] = new List<Color>();
-    //        List<Color> newC = new List<Color>();
-    //        for (int i = 0; i < VerCount; i++)
-    //        {
-    //            int dataindex = k * VerCount + i;
-    //            dataindex = dataindex - k;
-    //            if (dataindex > 419)
-    //                break;
-    //            for (int j = 0; j < 450; j++)
-    //            {
-    //                float value = (MaxData - Construct_i_Data[dataindex * 450 + j]) / (MaxData - MinData);
-    //                value = value < 0 ? 0 : value;
-    //                value = value > 1 ? 1 : value;
-    //                //将HSV的颜色值转为RGB的颜色值
-    //                if (value == 1)
-    //                    newC.Add(new Color(0, 0, 0, 0));
-    //                else
-    //                    newC.Add(Color.HSVToRGB(value * 2 / 3, 1, 1, false));
-    //            }
-    //        }
-    //        myColor[k] = newC;
-
-    //    }
-
-    //    return myColor;
-    //}
+    
 }

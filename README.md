@@ -16,6 +16,6 @@ Data Path:
 --
 Now there is **no .nc file** in the data path ***/Assets/StreamingAssets*** due to the Space limitation, or we can add some .nc data to the path, and modify the ***DataPath*** variable in **CreateFloor.cs**
 
-![image] DemoImage/white.jpg  
+![image](DemoImage/white.jpg)  
 
-![image] DemoImage/color.jpg
+![image](DemoImage/color.jpg)

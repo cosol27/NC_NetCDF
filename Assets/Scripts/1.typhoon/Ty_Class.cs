@@ -40,7 +40,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
     public List<List<float>>[] oriGraupData = new List<List<float>>[] { };     //graupdata
     public List<List<float>>[] oriMixData = new List<List<float>>[] { };     //mixdata
 
-    public List<Vector3>[] VoltexPoints = new List<Vector3>[] { };           //mesh vertices
+    public List<Vector3>[] VortexPoints = new List<Vector3>[] { };           //mesh vertices
 
     public bool bReadFinish = false;
 
@@ -167,7 +167,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
 
         float[] curdata = new float[allDataCount];
         // 之前读取过就不必读取经纬度坐标，加快IO读取速度
-        if (VoltexPoints.Length == 0)
+        if (VortexPoints.Length == 0)
         {
             //lat data
             int getlat = _netcdf.nc_get_var_float(ncidp, 1, curdata);
@@ -193,18 +193,17 @@ public class Ty_Class : IDisposable // : MonoBehaviour
             //yield return new WaitForFixedUpdate();
 
             //construct virtual points
-            VoltexPoints = new List<Vector3>[fromtopCount];
+            VortexPoints = new List<Vector3>[fromtopCount];
             for (int i = 0; i < fromtopCount; i++)
             {
                 List<Vector3> plane_points = new List<Vector3>();
                 for (int j = 0; j < latlogCount; j++)
                 {
-                    Vector3 point = new Vector3(oriLogData[j], i * FloorGap + FloorGap * UnityEngine.Random.Range(-0.1f, 0.1f), oriLatData[j]);
+                    Vector3 point = new Vector3(oriLogData[j], i * FloorGap, oriLatData[j]);
                     plane_points.Add(point);
                 }
-                VoltexPoints[i] = plane_points;
+                VortexPoints[i] = plane_points;
             }
-            //yield return new WaitForFixedUpdate();
         }
 
 
@@ -528,6 +527,47 @@ public class Ty_Class : IDisposable // : MonoBehaviour
             }
         }
 
+        float[] curdata = new float[allDataCount];
+        // 之前读取过就不必读取经纬度坐标，加快IO读取速度
+        if (VortexPoints.Length == 0)
+        {
+            //lat data
+            int getlat = _netcdf.nc_get_var_float(ncidp, 1, curdata);
+
+            if (getlat != 0)
+                Debug.Log("latdata: read with error: " + getlat);
+            for (int i = 0; i < latlogCount; i++)
+            {
+                oriLatData.Add(curdata[i]);
+            }
+            //Write_file(oriLatData, "LatData.txt");
+            //yield return new WaitForFixedUpdate();
+
+            //log data
+            int getlog = _netcdf.nc_get_var_float(ncidp, 2, curdata);
+            if (getlog != 0)
+                Debug.Log("logdata: read with error: " + getlog);
+            for (int i = 0; i < latlogCount; i++)
+            {
+                oriLogData.Add(curdata[i]);
+            }
+            //Write_file(oriLogData, "LogData.txt");
+            //yield return new WaitForFixedUpdate();
+
+            //construct virtual points
+            VortexPoints = new List<Vector3>[fromtopCount];
+            for (int i = 0; i < fromtopCount; i++)
+            {
+                List<Vector3> plane_points = new List<Vector3>();
+                for (int j = 0; j < latlogCount; j++)
+                {
+                    Vector3 point = new Vector3(oriLogData[j], i * FloorGap, oriLatData[j]);
+                    plane_points.Add(point);
+                }
+                VortexPoints[i] = plane_points;
+            }
+        }
+
         int closeflag = _netcdf.nc_close(ncidp);//close file
         if (closeflag == (int)_netcdf.ResultCode.NC_NOERR)
         {
@@ -596,7 +636,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
             UnityEngine.Object.Destroy(child.gameObject);
         }
 
-        for (int p = 0; p < VoltexPoints.Length; ++p)
+        for (int p = 0; p < VortexPoints.Length; ++p)
         //for (int p = 14; p < 17; p++)
         {
             GameObject obj = GameObject.Instantiate(floor);
@@ -605,7 +645,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
 
             obj.name = WeatherVariableName + "MeshObject__Z " + p;
 
-            Mesh[] newMesh = SetNewMesh(VoltexPoints[p], curdb[p], WeatherVariableName, !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));  //ALl 使其彩色图显示
+            Mesh[] newMesh = SetNewMesh(VortexPoints[p], curdb[p], WeatherVariableName, !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));  //ALl 使其彩色图显示
             //List<Color>[] newColor = SetNewColor(ty.oriCloudData[1][p]);
 
             int leng = newMesh.Length;
@@ -620,7 +660,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
             }
         }
 
-        List<Vector3>[] tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, "y");
+        List<Vector3>[] tmp_Voltexpoints = ReConstruct_VoltexPoints(VortexPoints, "y");
         List<float>[] tmp_curdb = ReConstruct_Curdb(curdb, "y");
         //渲染y轴面，即xz平面
         for (int py = 0; py < 13; ++py)
@@ -643,7 +683,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
             }
         }
 
-        tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, "x");
+        tmp_Voltexpoints = ReConstruct_VoltexPoints(VortexPoints, "x");
         tmp_curdb = ReConstruct_Curdb(curdb, "x");
         //渲染x轴面
         for (int px = 0; px < 14; ++px)
@@ -754,7 +794,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
 
         if (axis.ToLower() == "z")
         {
-            Mesh[] newMesh = SetNewMesh(VoltexPoints[p], curdb[p], WeatherVariableName, !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));
+            Mesh[] newMesh = SetNewMesh(VortexPoints[p], curdb[p], WeatherVariableName, !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));
 
             int leng = newMesh.Length;
             for (int i = 0; i < leng; i++)
@@ -769,7 +809,7 @@ public class Ty_Class : IDisposable // : MonoBehaviour
         }
         else
         {
-            List<Vector3> tmp_Voltexpoints = ReConstruct_VoltexPoints(VoltexPoints, axis, p);
+            List<Vector3> tmp_Voltexpoints = ReConstruct_VoltexPoints(VortexPoints, axis, p);
             List<float> tmp_curdb = ReConstruct_Curdb(curdb, axis, p);
 
             Mesh newMesh = SetNewMeshXY(tmp_Voltexpoints, tmp_curdb, WeatherVariableName, axis, !(WeatherVariableName.Contains("Cloud") || WeatherVariableName.Contains("Rain")));

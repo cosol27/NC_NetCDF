@@ -87,20 +87,19 @@
     <Compile Include="Assets\DOTween\Modules\DOTweenModuleUtils.cs" />
     <Compile Include="Assets\Scripts\1.typhoon\CameraControl.cs" />
     <Compile Include="Assets\Scripts\1.typhoon\CreateFloor.cs" />
+    <Compile Include="Assets\Scripts\1.typhoon\ReadNC.cs" />
     <Compile Include="Assets\Scripts\1.typhoon\Ty_Class.cs" />
     <Compile Include="Assets\Scripts\1.typhoon\_netcdf.cs" />
+    <Compile Include="Assets\Scripts\1.typhoon\create_mesh.cs" />
     <Compile Include="Assets\Scripts\2.showcurve\ShowTimeCurves.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\DOTween\DOTween.XML" />
     <None Include="Assets\DOTween\Editor\DOTweenEditor.XML" />
     <None Include="Assets\DOTween\readme.txt" />
-    <None Include="Assets\StreamingAssets\AllData.txt" />
-    <None Include="Assets\StreamingAssets\CloudData.txt" />
-    <None Include="Assets\StreamingAssets\GraupelData.txt" />
-    <None Include="Assets\StreamingAssets\IceData.txt" />
-    <None Include="Assets\StreamingAssets\RainData.txt" />
-    <None Include="Assets\StreamingAssets\SnowData.txt" />
+    <None Include="Assets\StreamingAssets\grapel_statistics.txt" />
+    <None Include="Assets\StreamingAssets\ice_statistics.txt" />
+    <None Include="Assets\StreamingAssets\snow_statistics.txt" />
     <None Include="Assets\Transparent.shader" />
     <None Include="Assets\df_Opaque.shader" />
     <None Include="Assets\test.shader" />
